@@ -1,2 +1,1 @@
-# .github
-Global configurations for the codefori GitHub organization 
+# Global configurations for the codefori GitHub organization 
