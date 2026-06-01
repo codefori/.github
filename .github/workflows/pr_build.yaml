@@ -1,0 +1,78 @@
+on:
+  workflow_call:
+    inputs:
+      publish_types:
+        required: false
+        default: false
+        type: boolean
+    
+jobs:
+  release:
+    name: Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js 24
+        uses: actions/setup-node@v3
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Get package info
+        id: package-info
+        uses: luizfelipelaviola/get-package-info@v2
+        with:
+          path: .
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate types
+        if: ${{ inputs.publish_types }}
+        run: npm run types
+      
+      - name: Create build
+        run: npx @vscode/vsce package --allow-package-all-secrets
+        
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package-info.outputs.name }}-pr-build
+          path: ./*.vsix
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v1
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: new build is available
+
+      - name: Post comment
+        if: steps.fc.outputs.comment-id == '' && always()
+        continue-on-error: true
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '👋 A new build is available for this PR based on ${{ github.event.pull_request.head.sha }}.\n * [Download here.](https://github.com/${{ github.GITHUB_REPOSITORY }}/actions/runs/${{ github.run_id }})\n* [Read more about how to test](https://github.com/codefori/.github/blob/main/.github/pr_testing_template.md)'
+            })
+
+      - name: Update comment
+        if: steps.fc.outputs.comment-id != '' && always()
+        continue-on-error: true
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          edit-mode: replace
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          body: |
+            👋 A new build is available for this PR based on ${{ github.event.pull_request.head.sha }}.
+
+            * [Download here.](https://github.com/${{ github.GITHUB_REPOSITORY }}/actions/runs/${{ github.run_id }})
+            * [Read more about how to test](https://github.com/codefori/.github/blob/main/.github/pr_testing_template.md)
