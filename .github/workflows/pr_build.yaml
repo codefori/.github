@@ -1,9 +1,6 @@
 on:
   workflow_call:
-    inputs:
-      target_branch:
-        required: false
-        type: string        
+    inputs:   
       publish_types:
         required: false
         default: false
@@ -19,14 +16,29 @@ jobs:
         with:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
-          
-      - if: ${{ inputs.target_branch != '' }}
+
+      - name: Checkout PR branch
+        if: github.event.pull_request
+        uses: actions/checkout@v6
+        
+      - name: Check PR comment
+        if: github.event.issue.pull_request
+        uses: khan/pull-request-comment-trigger@v1.1.0
+        id: check-comment
+        with:
+          trigger: '/build'
+          reaction: rocket
+
+      - name: Get PR branch
+        if: steps.check-comment.outputs.triggered == 'true'
+        uses: xt0rted/pull-request-comment-branch@v3
+        id: comment-branch
+
+      - name: Checkout PR branch from comment
+        if: steps.comment-branch.outputs.head_ref != ''
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.target_branch }}
-
-      - if: ${{ inputs.target_branch == '' }}
-        uses: actions/checkout@v6
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
 
       - name: Get package info
         id: package-info
@@ -51,11 +63,19 @@ jobs:
           name: ${{ steps.package-info.outputs.name }}-pr-build
           path: ./*.vsix
 
+      - name: Set issue number
+        id: issue-number
+        run: |
+          PR_ISSUE_NUMBER=${{ github.event.pull_request.number }}
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          echo "::set-output issue-number=value::${PR_ISSUE_NUMBER:-$ISSUE_NUMBER}"
+
       - name: Find Comment
+        if: github.event.pull_request
         uses: peter-evans/find-comment@v1
         id: fc
         with:
-          issue-number: ${{ github.event.pull_request.number }}
+          issue-number: ${{ steps.issue-number.outputs.value }}
           comment-author: 'github-actions[bot]'
           body-includes: new build is available
 
