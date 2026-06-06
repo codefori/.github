@@ -33,7 +33,7 @@ jobs:
 
       - name: Get PR branch
         if: steps.check-comment.outputs.triggered == 'true'
-        uses: xt0rted/pull-request-comment-branch@v3
+        uses: alessbell/pull-request-comment-branch@v2.1.0       
         id: comment-branch
 
       - name: Checkout PR branch from comment
