@@ -40,6 +40,7 @@ jobs:
         if: steps.comment-branch.outputs.head_ref != ''
         uses: actions/checkout@v6
         with:
+          repo: ${{ steps.comment-branch.outputs.head_repo }}
           ref: ${{ steps.comment-branch.outputs.head_ref }}
 
       - name: Get package info
@@ -82,8 +83,7 @@ jobs:
           body-includes: new build is available
 
       - name: Post comment
-        if: steps.fc.outputs.comment-id == '' && always()
-        continue-on-error: true
+        if: steps.fc.outputs.comment-id == ''
         uses: actions/github-script@v5
         with:
           script: |
@@ -94,8 +94,7 @@ jobs:
               body: '👋 A new build is available for this PR based on ${{ github.event.pull_request.head.sha }}.\n * [Download here.](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.vsix-upload.outputs.artifact-id }})\n* [Read more about how to test](https://github.com/codefori/.github/blob/main/.github/pr_testing_template.md)'            })
 
       - name: Update comment
-        if: steps.fc.outputs.comment-id != '' && always()
-        continue-on-error: true
+        if: steps.fc.outputs.comment-id != ''
         uses: peter-evans/create-or-update-comment@v1
         with:
           edit-mode: replace
