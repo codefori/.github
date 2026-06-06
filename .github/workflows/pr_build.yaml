@@ -19,29 +19,17 @@ jobs:
 
       - name: Checkout PR branch
         if: github.event.pull_request
-        uses: actions/checkout@v6
-        
-      - name: Check PR comment
-        if: github.event.issue.pull_request
-        uses: khan/pull-request-comment-trigger@v1.1.0
-        id: check-comment
+        uses: actions/checkout@v6        
         with:
-          trigger: '/build'
-          reaction: rocket
-        env:
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-
-      - name: Get PR branch
-        if: steps.check-comment.outputs.triggered == 'true'
-        uses: alessbell/pull-request-comment-branch@v2.1.0       
-        id: comment-branch
+          repository: ${{ github.event.pull_request.pull_request.head.repo }}
+          ref: ${{ github.event.pull_request.pull_request.head.ref }}
 
       - name: Checkout PR branch from comment
-        if: steps.comment-branch.outputs.head_ref != ''
+        if: github.event.pull_request_review_comment
         uses: actions/checkout@v6
         with:
-          repository: ${{ steps.comment-branch.outputs.head_repo }}
-          ref: ${{ steps.comment-branch.outputs.head_ref }}
+          repository: ${{ github.event.pull_request_review_comment.pull_request.head.repo }}
+          ref: ${{ github.event.pull_request_review_comment.pull_request.head.ref }}
 
       - name: Get package info
         id: package-info
