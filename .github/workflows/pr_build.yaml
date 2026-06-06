@@ -28,6 +28,8 @@ jobs:
         with:
           trigger: '/build'
           reaction: rocket
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
       - name: Get PR branch
         if: steps.check-comment.outputs.triggered == 'true'
