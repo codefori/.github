@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: ${{ steps.comment-branch.outputs.head_repo }}
-          path: ${{ steps.comment-branch.outputs.head_ref }}
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
 
       - name: Get package info
         id: package-info
