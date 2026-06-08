@@ -21,12 +21,6 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
 
-      - name: Get package info
-        id: package-info
-        uses: luizfelipelaviola/get-package-info@v2
-        with:
-          path: .
-
       - name: Use Node.js 24
         uses: actions/setup-node@v6
         with:
@@ -39,10 +33,16 @@ jobs:
       - name: Update version number
         run: npm version --allow-same-version --no-git-tag-version ${{ github.ref_name }}
 
+      - name: Get package info
+        id: package-info
+        uses: luizfelipelaviola/get-package-info@v2
+        with:
+          path: .
+
       - name: Package
         run: npx @vscode/vsce package --allow-package-all-secrets
 
-      - name: Generate and publish types
+      - name: Generate types
         if: ${{ inputs.publish_types }}
         run: |
           cd types
@@ -50,13 +50,12 @@ jobs:
           cd ..
           npm run types
       
-      - name: Generate and publish types
+      - name: Publish types
         if: ${{ inputs.publish_types }}
         working-directory: types
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
 
       - name: Publish on VS Code marketplace
         run: npx @vscode/vsce publish --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix --pat ${{ secrets.PUBLISHER_TOKEN }}
