@@ -51,6 +51,9 @@ jobs:
           npm run types
           cd types
           npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
 
       - name: Publish on VS Code marketplace
         run: npx @vscode/vsce publish --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix --pat ${{ secrets.PUBLISHER_TOKEN }}
