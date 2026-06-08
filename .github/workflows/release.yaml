@@ -49,8 +49,11 @@ jobs:
           npm version --allow-same-version --no-git-tag-version ${{ github.ref_name }}
           cd ..
           npm run types
-          cd types
-          npm publish --access public
+      
+      - name: Generate and publish types
+        if: ${{ inputs.publish_types }}
+        working-directory: types
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
