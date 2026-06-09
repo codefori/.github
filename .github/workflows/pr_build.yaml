@@ -1,6 +1,6 @@
 on:
   workflow_call:
-    inputs:   
+    inputs:
       publish_types:
         required: false
         default: false
@@ -12,24 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Use Node.js 24
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Checkout PR branch
-        if: github.event.pull_request
-        uses: actions/checkout@v6        
-        with:
-          repository: ${{ github.event.pull_request.pull_request.head.repo }}
-          ref: ${{ github.event.pull_request.pull_request.head.ref }}
-
-      - name: Checkout PR branch from comment
-        if: github.event.pull_request_review_comment
-        uses: actions/checkout@v6
-        with:
-          repository: ${{ github.event.pull_request_review_comment.pull_request.head.repo }}
-          ref: ${{ github.event.pull_request_review_comment.pull_request.head.ref }}
+          
+      - uses: actions/checkout@v6
 
       - name: Get package info
         id: package-info
@@ -54,24 +42,17 @@ jobs:
           name: ${{ steps.package-info.outputs.name }}-pr-build
           path: ./*.vsix
 
-      - name: Set issue number
-        id: issue-number
-        run: |
-          PR_ISSUE_NUMBER=${{ github.event.pull_request.number }}
-          ISSUE_NUMBER=${{ github.event.issue.number }}
-          echo "::set-output issue-number=value::${PR_ISSUE_NUMBER:-$ISSUE_NUMBER}"
-
       - name: Find Comment
-        if: github.event.pull_request
         uses: peter-evans/find-comment@v1
         id: fc
         with:
-          issue-number: ${{ steps.issue-number.outputs.value }}
+          issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: new build is available
 
       - name: Post comment
-        if: steps.fc.outputs.comment-id == ''
+        if: steps.fc.outputs.comment-id == '' && always()
+        continue-on-error: true
         uses: actions/github-script@v5
         with:
           script: |
@@ -82,7 +63,8 @@ jobs:
               body: '👋 A new build is available for this PR based on ${{ github.event.pull_request.head.sha }}.\n * [Download here.](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.vsix-upload.outputs.artifact-id }})\n* [Read more about how to test](https://github.com/codefori/.github/blob/main/.github/pr_testing_template.md)'            })
 
       - name: Update comment
-        if: steps.fc.outputs.comment-id != ''
+        if: steps.fc.outputs.comment-id != '' && always()
+        continue-on-error: true
         uses: peter-evans/create-or-update-comment@v1
         with:
           edit-mode: replace
