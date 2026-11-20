@@ -51,7 +51,7 @@ jobs:
         run: npm ci
 
       - name: Update version number
-        run: npm version --allow-same-version --no-git-tag-version $NPM_VERSION
+        run: npm version --allow-same-version --no-git-tag-version ${{ env.NPM_VERSION }}
 
       - name: Get package info
         id: package-info
@@ -64,7 +64,7 @@ jobs:
         uses: beaconbrigade/package-json-version@v0.3
 
       - name: Package
-        run: npx @vscode/vsce package $PRERELEASE --allow-package-all-secrets
+        run: npx @vscode/vsce package ${{ env.PRERELEASE }} --allow-package-all-secrets
 
       - name: Generate types
         if: ${{ inputs.publish_types }}
@@ -77,7 +77,7 @@ jobs:
       - name: Publish types
         if: ${{ inputs.publish_types }}
         working-directory: types
-        run: npm publish --access public --tag $TYPES_TAG
+        run: npm publish --access public --tag ${{ env.TYPES_TAG }}
 
       - name: Publish on VS Code marketplace
         run: npx @vscode/vsce publish --oidc --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
@@ -98,7 +98,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git commit --allow-empty -a -m "$COMMIT_LABEL ${{ steps.tag-version.outputs.current-version}}"
+          git commit --allow-empty -a -m "${{ env.COMMIT_LABEL }} ${{ steps.tag-version.outputs.current-version}}"
           git tag -f ${{ steps.tag-version.outputs.current-version}}
           git push --tags --force
 
