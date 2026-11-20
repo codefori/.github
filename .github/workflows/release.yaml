@@ -73,17 +73,17 @@ jobs:
           npm version --allow-same-version --no-git-tag-version ${{ steps.tag-version.outputs.current-version}}
           cd ..
           npm run types
-      
-      - name: Publish types
-        if: ${{ inputs.publish_types }}
-        working-directory: types
-        run: npm publish --access public --tag ${{ env.TYPES_TAG }}
 
       - name: Publish on VS Code marketplace
         run: npx @vscode/vsce publish --oidc --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
 
       - name: Publish on Open VSX
         run: npx ovsx publish --trusted-publishing --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
+
+      - name: Publish types
+        if: ${{ inputs.publish_types }}
+        working-directory: types
+        run: npm publish --access public --tag ${{ env.TYPES_TAG }}
 
       - name: Attach vsix
         if: ${{ ! inputs.is_prerelease }}
