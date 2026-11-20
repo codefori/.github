@@ -5,6 +5,10 @@ on:
         required: false
         default: false
         type: boolean
+      is_prerelease:
+        required: false
+        default: false
+        type: boolean  
 
 permissions:
   id-token: write  # Required for OIDC
@@ -30,7 +34,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Update version number
+      - name: Update version number for prelease
+        if: ${{ inputs.is_prerelease }}
+        run: npm version --no-git-tag-version patch
+
+      - name: Update version number for release
+        if: ${{ ! inputs.is_prerelease }}
         run: npm version --allow-same-version --no-git-tag-version ${{ github.ref_name }}
 
       - name: Get package info
@@ -39,14 +48,27 @@ jobs:
         with:
           path: .
 
-      - name: Package
-        run: npx @vscode/vsce package --allow-package-all-secrets
+      - name: Read version
+        id: tag-version
+        uses: beaconbrigade/package-json-version@v0.3
+
+      - env:
+          PRERELEASE: ""
+          TYPE_LABEL: "Release"
+
+      - if: ${{ inputs.is_prerelease }}
+        env:
+          PRERELEASE: "--pre-release"
+          TYPE_LABEL: "Pre-release"
+
+      - name: Package $TYPE_LABEL
+        run: npx @vscode/vsce package $PRERELEASE --allow-package-all-secrets
 
       - name: Generate types
         if: ${{ inputs.publish_types }}
         run: |
           cd types
-          npm version --allow-same-version --no-git-tag-version ${{ github.ref_name }}
+          npm version --allow-same-version --no-git-tag-version ${{ steps.tag-version.outputs.current-version}}
           cd ..
           npm run types
       
@@ -62,6 +84,7 @@ jobs:
         run: npx ovsx publish --trusted-publishing --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
 
       - name: Attach vsix
+        if: ${{ ! inputs.is_prerelease }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -73,8 +96,8 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git commit --allow-empty -a -m "Release ${{ github.ref_name }}"
-          git tag -f ${{ github.ref_name }}
+          git commit --allow-empty -a -m "$TYPE_LABEL ${{ steps.tag-version.outputs.current-version}}"
+          git tag -f ${{ steps.tag-version.outputs.current-version}}
           git push --tags --force
 
       - name: Bump version numbers for next cycle
