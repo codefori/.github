@@ -6,6 +6,9 @@ on:
         default: false
         type: boolean
 
+permissions:
+  id-token: write  # Required for OIDC
+
 jobs:
   publish_prerelease:
     runs-on: ubuntu-latest
@@ -41,10 +44,10 @@ jobs:
         run: npx @vscode/vsce package --pre-release --allow-package-all-secrets
 
       - name: Publish on VS Code marketplace
-        run: npx @vscode/vsce publish --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix --pat ${{ secrets.PUBLISHER_TOKEN }}
+        run: npx @vscode/vsce publish --oidc --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
 
       - name: Publish on Open VSX
-        run: npx ovsx publish --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix --pat ${{ secrets.OPENVSX_TOKEN }}
+        run: npx ovsx publish --trusted-publishing --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
 
       - name: Bump version number for next dev cycle
         run: npm version --no-git-tag-version prerelease --preid dev
