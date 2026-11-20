@@ -28,7 +28,7 @@ jobs:
           echo "TYPE_LABEL=Pre-release" >> "$GITHUB_ENV"
 
       - name: Set release environment values
-        if: ${{ inputs.is_prerelease }}
+        if: ${{ ! inputs.is_prerelease }}
         run: |
           echo "PRERELEASE=" >> "$GITHUB_ENV"
           echo "TYPE_LABEL=Release" >> "$GITHUB_ENV"
