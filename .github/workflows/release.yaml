@@ -5,10 +5,6 @@ on:
         required: false
         default: false
         type: boolean
-      is_prerelease:
-        required: false
-        default: false
-        type: boolean  
 
 permissions:
   id-token: write  # Required for OIDC
@@ -22,7 +18,7 @@ jobs:
 
     steps:
       - name: Set pre-release environment values
-        if: ${{ inputs.is_prerelease }}
+        if: ${{ github.event.release.prerelease }}
         run: |
           echo "PRERELEASE=--pre-release" >> "$GITHUB_ENV"
           echo "COMMIT_LABEL=Pre-release" >> "$GITHUB_ENV"
