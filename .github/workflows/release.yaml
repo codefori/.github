@@ -74,8 +74,8 @@ jobs:
           cd ..
           npm run types
 
-      #- name: Publish on VS Code marketplace
-      #  run: npx @vscode/vsce publish --oidc --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
+      - name: Publish on VS Code marketplace
+        run: npx @vscode/vsce publish --oidc --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
 
       - name: Publish on Open VSX
         run: npx ovsx publish --trusted-publishing --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
