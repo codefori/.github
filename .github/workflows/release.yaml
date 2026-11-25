@@ -59,10 +59,6 @@ jobs:
         with:
           path: .
 
-      - name: Read version
-        id: tag-version
-        uses: beaconbrigade/package-json-version@v0.3
-
       - name: Package
         run: npx @vscode/vsce package ${{ env.PRERELEASE }} --allow-package-all-secrets
 
@@ -70,15 +66,15 @@ jobs:
         if: ${{ inputs.publish_types }}
         run: |
           cd types
-          npm version --allow-same-version --no-git-tag-version ${{ steps.tag-version.outputs.current-version}}
+          npm version --allow-same-version --no-git-tag-version ${{ steps.package-info.outputs.version }}
           cd ..
           npm run types
 
       - name: Publish on VS Code marketplace
-        run: npx @vscode/vsce publish --oidc --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
+        run: npx @vscode/vsce publish  --pat ${{ secrets.PUBLISHER_TOKEN }} --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version }}.vsix
 
       - name: Publish on Open VSX
-        run: npx ovsx publish --trusted-publishing --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version}}.vsix
+        run: npx ovsx publish --trusted-publishing --skip-duplicate --packagePath ${{ steps.package-info.outputs.name }}-${{ steps.package-info.outputs.version }}.vsix
 
       - name: Publish types
         if: ${{ inputs.publish_types }}
@@ -98,8 +94,8 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git commit --allow-empty -a -m "${{ env.COMMIT_LABEL }} ${{ steps.tag-version.outputs.current-version}}"
-          git tag -f ${{ steps.tag-version.outputs.current-version}}
+          git commit --allow-empty -a -m "${{ env.COMMIT_LABEL }} ${{ steps.package-info.outputs.version}}"
+          git tag -f ${{ steps.package-info.outputs.version}}
           git push --tags --force
 
       - name: Bump version numbers for next cycle
